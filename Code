@@ -1,0 +1,93 @@
+# Install required packages if not already installed
+if (!requireNamespace("shiny", quietly = TRUE)) {
+    install.packages("shiny")
+}
+
+if (!requireNamespace("flexdashboard", quietly = TRUE)) {
+    install.packages("flexdashboard")
+}
+
+if (!requireNamespace("palmerpenguins", quietly = TRUE)) {
+    install.packages("palmerpenguins")
+}
+
+if (!requireNamespace("palmerpenguins", quietly = TRUE)) {
+    install.packages("scales")
+}
+
+# Load required libraries
+library(shiny)
+library(flexdashboard)
+library(palmerpenguins)
+library(ggplot2)
+library(scales)
+
+# Load penguins dataset
+data("penguins")
+
+# Define UI for application
+ui <- fluidPage(
+    titlePanel("Penguin Insights Dashboard"),
+    
+    # Sidebar layout
+    sidebarLayout(
+        sidebarPanel(
+            # Add any sidebar elements if needed
+        ),
+        
+        # Main panel layout
+        mainPanel(
+            tabsetPanel(
+                tabPanel("Scatter plot - Bill Length vs Bill Depth", plotOutput("plot1")),
+                tabPanel("Histogram - Flipper Length", plotOutput("plot2")),
+                tabPanel("Boxplot - Body Mass by Species", plotOutput("plot3")),
+                tabPanel("Pie chart - Proportion of Species", plotOutput("plot4"))
+            )
+        )
+    )
+)
+
+# Define server logic
+server <- function(input, output) {
+    # Insight 1: Scatter plot - Bill Length vs Bill Depth
+    output$plot1 <- renderPlot({
+        ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+            geom_point() +
+            labs(title = "Scatter Plot - Bill Length vs Bill Depth",
+                 x = "Bill Length (mm)", y = "Bill Depth (mm)")
+    })
+    
+    # Insight 2: Histogram - Flipper Length
+    output$plot2 <- renderPlot({
+        ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+            geom_histogram(binwidth = 5, position = "identity") +
+            labs(title = "Histogram - Flipper Length",
+                 x = "Flipper Length (mm)", y = "Frequency")
+    })
+    
+    # Insight 3: Boxplot - Body Mass by Species
+    output$plot3 <- renderPlot({
+        ggplot(penguins, aes(x = species, y = body_mass_g, fill = species)) +
+            geom_boxplot() +
+            labs(title = "Boxplot - Body Mass by Species",
+                 x = "Species", y = "Body Mass (g)")
+    })
+    
+    # Insight 4: Pie chart - Proportion of Species
+    output$plot4 <- renderPlot({
+        species_counts <- table(penguins$species)
+        total_species <- sum(species_counts)
+        percentage_labels <- sprintf("%.1f%%", (species_counts / total_species) * 100)
+        
+        ggplot(data = NULL, aes(x = "", y = species_counts, fill = names(species_counts))) +
+            geom_bar(stat = "identity", width = 1) +
+            geom_text(aes(label = percentage_labels), position = position_stack(vjust = 0.5)) +
+            coord_polar("y") +
+            labs(title = "Pie Chart - Proportion of Species", fill = "Species") +
+            theme_void() +
+            theme(legend.position = "none")  # To remove the legend
+    })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
